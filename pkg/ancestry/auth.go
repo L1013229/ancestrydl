@@ -81,7 +81,11 @@ func (c *Client) LoginWithOptions(username, password string, opts LoginOptions) 
 	}
 
 	// Wait for the login form to be visible
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
+
+	// Screenshot for debugging
+	c.page.MustScreenshot("/tmp/ancestry_login_page.png")
+	fmt.Println("   [debug] Screenshot saved to /tmp/ancestry_login_page.png")
 
 	// Find and fill username field
 	usernameField, err := c.page.Element("#username")
@@ -122,7 +126,11 @@ func (c *Client) submitLoginAndVerify(opts LoginOptions) error {
 	}
 
 	// Wait for navigation after login
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
+
+	// Screenshot after submit
+	c.page.MustScreenshot("/tmp/ancestry_after_submit.png")
+	fmt.Println("   [debug] Post-submit screenshot saved to /tmp/ancestry_after_submit.png")
 
 	// Wait for URL to change or 2FA buttons to appear (up to 10 seconds)
 	maxWaitTime := 10 * time.Second

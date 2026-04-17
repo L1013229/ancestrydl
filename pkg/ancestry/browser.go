@@ -23,7 +23,7 @@ type Client struct {
 // NewClient creates a new Client with a headful browser
 func NewClient() (*Client, error) {
 	// Launch headful browser so user can see/interact if needed (e.g. for CAPTCHA)
-	u := launcher.New().Headless(false).MustLaunch()
+	u := launcher.New().Headless(true).NoSandbox(true).MustLaunch()
 	browser := rod.New().ControlURL(u).MustConnect()
 
 	// Create a new page
