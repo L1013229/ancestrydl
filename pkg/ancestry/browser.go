@@ -20,10 +20,19 @@ type Client struct {
 	mu               sync.Mutex
 }
 
-// NewClient creates a new Client with a headful browser
+// serverLauncher configures the browser for headless server operation: the
+// DAQT fork runs on a container with no display and as a user for which
+// Chromium's sandbox is unavailable, so both flags are required for the
+// browser to start at all. pkg/ancestry/browser_test.go pins them; this is
+// the fork's one behavioural change from upstream and the thing an upstream
+// sync would most easily undo.
+func serverLauncher() *launcher.Launcher {
+	return launcher.New().Headless(true).NoSandbox(true)
+}
+
+// NewClient creates a new Client with a headless browser
 func NewClient() (*Client, error) {
-	// Launch headful browser so user can see/interact if needed (e.g. for CAPTCHA)
-	u := launcher.New().Headless(true).NoSandbox(true).MustLaunch()
+	u := serverLauncher().MustLaunch()
 	browser := rod.New().ControlURL(u).MustConnect()
 
 	// Create a new page
