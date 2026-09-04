@@ -1,79 +1,73 @@
 name: CI
 
+# Truthful CI for a dormant fork (daqt-server #5923). The fork differs from
+# upstream by one behavioural change, headless browser launch for server
+# operation, and pkg/ancestry/browser_test.go pins it. Everything here runs
+# on a hosted runner with a read-only token; there is no release producer
+# (retired in #2: it had no consumer and tagged before it tested).
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A pull request cancels its own superseded heads; a main run is never
+# cancelled, because it is the exact-main evidence the CI health monitor reads.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('sha-{0}', github.sha) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
-    name: Test
+    name: Build, vet and test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-    - name: Check out code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-
-    - name: Download dependencies
-      run: go mod download
-
-    - name: Run tests
-      run: go test -v -race -coverprofile=coverage.out ./...
-
-    - name: Upload coverage
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./coverage.out
-        flags: unittests
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          # The module's own requirement, so the workflow cannot drift from go.mod
+          # the way the previous Go 1.22 pin did against a go 1.24.0 module.
+          go-version-file: go.mod
+      - name: Download dependencies
+        run: go mod download
+      - name: Build the executable
+        run: go build -v .
+      - name: Vet
+        run: go vet ./...
+      - name: Test with the race detector
+        run: go test -race -count=1 ./...
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-    - name: Check out code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v3
-      with:
-        version: latest
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.24'
-
-    - name: Build
-      run: go build -v .
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
+        with:
+          # Pinned: `latest` made the lint verdict depend on the day it ran.
+          version: v1.64.8
 
   conventional-commits:
     name: Check Conventional Commits
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-    - name: Check out code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Check commits
-      uses: amannn/action-semantic-pull-request@v5
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

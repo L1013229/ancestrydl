@@ -1,0 +1,23 @@
+# Keeps the SHA-pinned actions and the Go module graph moving (daqt-server #5923).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Pacific/Auckland
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Pacific/Auckland
+    groups:
+      go:
+        patterns: ["*"]
