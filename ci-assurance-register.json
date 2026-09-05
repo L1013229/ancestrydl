@@ -3,15 +3,21 @@
   "recorded": "2026-09-04",
   "programme": "L1013229/daqt-server#5923",
   "required_checks": [
-    {"context": "Build, vet and test", "app_id": 15368},
-    {"context": "Lint", "app_id": 15368}
+    {
+      "context": "Build, vet and test",
+      "app_id": 15368
+    },
+    {
+      "context": "Lint",
+      "app_id": 15368
+    }
   ],
   "workflows": {
     ".github/workflows/ci.yml": {
       "origin": "Truthful CI for a dormant public fork (upstream chrisrob11/ancestrydl plus one DAQT commit adapting browser launch for headless server operation): build the executable, vet, race-tested unit tests including the pin on the headless adaptation, golangci-lint at a pinned version, and a conventional-commit title check on pull requests.",
       "protects": "An upstream sync or edit that stops the executable compiling on the Go the module requires, breaks a unit test, or drops the headless and no-sandbox launcher flags without which the fork cannot start a browser on the server.",
       "consumer": "Pull-request admission (the build and lint jobs are required; the commit-title check runs only on pull requests and is not required) and the daqt-server CI health monitor, which reads the default-branch verdict.",
-      "falsifier": "pkg/ancestry/browser_test.go fails when either launcher flag is removed; the Go toolchain is taken from go.mod so the workflow cannot pin a Go that rejects the module (the previous workflow pinned 1.22 against a 1.24.0 module and could not have built); the provider refuses unpinned action references.",
+      "falsifier": "pkg/ancestry/browser_test.go fails when either launcher flag is removed; pkg/ancestry/browser_wiring_test.go fails when the executable stops reaching serverLauncher, which is the half an upstream sync breaks: it walks every non-test file in the module and holds that only serverLauncher reaches the launcher package, that every rod browser is given a control URL traced back to serverLauncher, and that serverLauncher is called from somewhere other than itself. Verified both ways on 2026-09-05: with NewClient's call to serverLauncher removed the test fails and the earlier package-scoped version passed. The Go toolchain is taken from go.mod so the workflow cannot pin a Go that rejects the module (the previous workflow pinned 1.22 against a 1.24.0 module and could not have built); the provider refuses unpinned action references (repository Actions permissions report sha_pinning_required true, read 2026-09-05).",
       "rollback": "git revert of the workflow change; the ruleset requiring the two jobs is removed with the provider API if a job has to be withdrawn."
     }
   },
@@ -19,5 +25,11 @@
     "codecov upload": "no consumer: the fork publishes no coverage anywhere and the upload needed a moving third-party action",
     ".github/workflows/release.yml": "retired in #2: no release object, no consumer, and it tagged before it tested"
   },
-  "dependabot": {"ecosystems": ["github-actions", "gomod"], "interval": "weekly"}
+  "dependabot": {
+    "ecosystems": [
+      "github-actions",
+      "gomod"
+    ],
+    "interval": "weekly"
+  }
 }
