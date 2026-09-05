@@ -200,6 +200,87 @@ type wiring struct {
 	launcherUses  int
 }
 
+// launcherUsesIn applies P1 to one function and reports how many times the
+// launcher package was reached from it.
+func launcherUsesIn(t *testing.T, fset *token.FileSet, function *ast.FuncDecl, alias string) int {
+	t.Helper()
+	if alias == "" {
+		return 0
+	}
+	uses := 0
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		member, ok := selectsOn(node, alias)
+		if !ok {
+			return true
+		}
+		uses++
+		if function.Name.Name != launcherBuilder {
+			t.Errorf(
+				"%s: %s calls %s.%s; only %s may reach the launcher package, so the "+
+					"headless and no-sandbox flags cannot be lost",
+				fset.Position(node.Pos()), function.Name.Name, alias, member, launcherBuilder,
+			)
+		}
+		return true
+	})
+	return uses
+}
+
+// browserWiringIn collects, for one function, where it constructs a rod
+// browser and every expression it hands to ControlURL.
+func browserWiringIn(function *ast.FuncDecl, alias string) ([]token.Pos, []ast.Expr) {
+	if alias == "" {
+		return nil, nil
+	}
+	var builds []token.Pos
+	var urls []ast.Expr
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		if member, ok := selectsOn(node, alias); ok && member == "New" {
+			builds = append(builds, node.Pos())
+		}
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		if selector, ok := call.Fun.(*ast.SelectorExpr); ok &&
+			selector.Sel.Name == controlURL && len(call.Args) == 1 {
+			urls = append(urls, call.Args[0])
+		}
+		return true
+	})
+	return builds, urls
+}
+
+// analyseFunction applies P1 and P2 to one function declaration.
+func analyseFunction(
+	t *testing.T, fset *token.FileSet, function *ast.FuncDecl, launcherName, rodName string,
+) wiring {
+	t.Helper()
+	seen := wiring{launcherUses: launcherUsesIn(t, fset, function, launcherName)}
+
+	if function.Name.Name != launcherBuilder && callsFunction(function.Body, launcherBuilder) {
+		seen.builderCalls++
+	}
+
+	builds, urls := browserWiringIn(function, rodName)
+	seen.browserBuilds = len(builds)
+	if len(builds) == 0 {
+		return seen
+	}
+	for _, url := range urls {
+		if tracesToBuilder(function, url) {
+			return seen
+		}
+	}
+	// P2
+	t.Errorf(
+		"%s: %s constructs a browser without a %s that comes from %s; rod would launch its "+
+			"own browser, without the flags the server needs",
+		fset.Position(builds[0]), function.Name.Name, controlURL, launcherBuilder,
+	)
+	return seen
+}
+
 // scanWiring applies P1 and P2 across the module and reports what it saw, so
 // P3 can refuse a module in which the rules held over nothing.
 func scanWiring(t *testing.T) wiring {
@@ -217,66 +298,15 @@ func scanWiring(t *testing.T) wiring {
 		if launcherName == "" && rodName == "" {
 			continue
 		}
-
 		for _, declaration := range file.Decls {
 			function, ok := declaration.(*ast.FuncDecl)
 			if !ok || function.Body == nil {
 				continue
 			}
-
-			if function.Name.Name != launcherBuilder && callsFunction(function.Body, launcherBuilder) {
-				seen.builderCalls++
-			}
-
-			var builds []token.Pos
-			var urls []ast.Expr
-			ast.Inspect(function.Body, func(node ast.Node) bool {
-				if launcherName != "" {
-					if member, ok := selectsOn(node, launcherName); ok {
-						seen.launcherUses++
-						if function.Name.Name != launcherBuilder {
-							// P1
-							t.Errorf(
-								"%s: %s calls %s.%s; only %s may reach the launcher package, so the "+
-									"headless and no-sandbox flags cannot be lost",
-								fset.Position(node.Pos()), function.Name.Name, launcherName, member, launcherBuilder,
-							)
-						}
-					}
-				}
-				if rodName != "" {
-					if member, ok := selectsOn(node, rodName); ok && member == "New" {
-						builds = append(builds, node.Pos())
-					}
-					if call, ok := node.(*ast.CallExpr); ok {
-						if selector, ok := call.Fun.(*ast.SelectorExpr); ok &&
-							selector.Sel.Name == controlURL && len(call.Args) == 1 {
-							urls = append(urls, call.Args[0])
-						}
-					}
-				}
-				return true
-			})
-
-			seen.browserBuilds += len(builds)
-			if len(builds) == 0 {
-				continue
-			}
-			// P2
-			wired := false
-			for _, url := range urls {
-				if tracesToBuilder(function, url) {
-					wired = true
-					break
-				}
-			}
-			if !wired {
-				t.Errorf(
-					"%s: %s constructs a browser without a %s that comes from %s; rod would launch its "+
-						"own browser, without the flags the server needs",
-					fset.Position(builds[0]), function.Name.Name, controlURL, launcherBuilder,
-				)
-			}
+			found := analyseFunction(t, fset, function, launcherName, rodName)
+			seen.builderCalls += found.builderCalls
+			seen.browserBuilds += found.browserBuilds
+			seen.launcherUses += found.launcherUses
 		}
 	}
 	return seen
