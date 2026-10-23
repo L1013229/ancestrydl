@@ -343,6 +343,13 @@ Useful for debugging or understanding the API structure.
 
 ## 🤝 Contributing
 
+CI pins golangci-lint v2.15.0 and its compatible action, so dependency proposals
+can be checked with the Go version declared in `go.mod`. The configuration keeps
+the existing lint and formatting checks, thresholds and test coverage. Its
+explicit goconst scope preserves the previous checker's treatment of calls and
+composite literals. Native dependency batches use `chore(deps)` titles to satisfy
+the same Conventional Commit check as other pull requests.
+
 Contributions are welcome! Please:
 1. Fork the repository
 2. Create a feature branch
