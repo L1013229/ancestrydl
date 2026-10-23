@@ -1,31 +1,46 @@
+version: "2"
+run:
+  timeout: 5m
+  tests: true
 linters:
+  default: none
   enable:
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
     - unused
-    - gofmt
-    - goimports
+    - goconst
+    - gocyclo
     - misspell
     - unconvert
     - unparam
-    - goconst
-    - gocyclo
-
-linters-settings:
-  gocyclo:
-    min-complexity: 15
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-
+  settings:
+    staticcheck:
+      checks: ["S*", "SA*"]
+    goconst:
+      # Keep the v1 checker's scope: calls and composite literals were not checked.
+      exclude-types: [Call, CompositeLit]
+      min-len: 2
+      min-occurrences: 2
+    gocyclo:
+      min-complexity: 15
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-
-run:
-  timeout: 5m
-  tests: true
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

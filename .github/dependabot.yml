@@ -2,6 +2,9 @@
 version: 2
 multi-ecosystem-groups:
   routine-dependencies:
+    commit-message:
+      prefix: chore
+      include: scope
     schedule:
       interval: weekly
       day: monday
