@@ -1,7 +1,7 @@
 # One weekly native batch for the existing Go and Actions updates (#7262).
 version: 2
 multi-ecosystem-groups:
-  routine-dependencies:
+  weekly-dependencies:
     commit-message:
       prefix: chore
       include: scope
@@ -14,8 +14,8 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     patterns: ["*"]
-    multi-ecosystem-group: routine-dependencies
+    multi-ecosystem-group: weekly-dependencies
   - package-ecosystem: gomod
     directory: /
     patterns: ["*"]
-    multi-ecosystem-group: routine-dependencies
+    multi-ecosystem-group: weekly-dependencies
