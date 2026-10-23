@@ -29,6 +29,21 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           persist-credentials: false
+      # Regenerate after changing uses: gh actions-lock --no-narrow
+      - name: Verify workflow dependency lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          temporary=$(mktemp -d "${RUNNER_TEMP}/actions-lock.XXXXXXXX")
+          trap 'rm -rf -- "$temporary"' EXIT
+          binary="$temporary/actions-lock"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+            --max-time 90 https://github.com/github/gh-actions-lock/releases/download/v0.3.0/linux-amd64 \
+            --output "$binary"
+          printf '%s  %s\n' 15810767a8cd28d389f0942e3ce515ac0008c3f65301c3834fd4c046d4bda497 "$binary" | sha256sum --check --status
+          chmod 700 "$binary"
+          "$binary" --verify-local
+
       - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
           # The module's own requirement, so the workflow cannot drift from go.mod
