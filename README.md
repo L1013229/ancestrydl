@@ -349,6 +349,10 @@ Contributions are welcome! Please:
 3. Make your changes with tests
 4. Submit a pull request
 
+This fork batches Go and GitHub Actions version updates into one native Dependabot
+pull request on Mondays at 07:00 Pacific/Auckland. The existing all-version update
+policy, build, race tests, lint and Actions lock verification still apply.
+
 ## 📄 License
 
 MIT License - See [LICENSE](LICENSE) file for details.

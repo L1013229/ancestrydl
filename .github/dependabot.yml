@@ -1,23 +1,18 @@
-# Keeps the SHA-pinned actions and the Go module graph moving (daqt-server #5923).
+# One weekly native batch for the existing Go and Actions updates (#7262).
 version: 2
+multi-ecosystem-groups:
+  routine-dependencies:
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Pacific/Auckland
 updates:
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
-      day: monday
-      time: "07:00"
-      timezone: Pacific/Auckland
-    groups:
-      actions:
-        patterns: ["*"]
+    patterns: ["*"]
+    multi-ecosystem-group: routine-dependencies
   - package-ecosystem: gomod
     directory: /
-    schedule:
-      interval: weekly
-      day: monday
-      time: "07:00"
-      timezone: Pacific/Auckland
-    groups:
-      go:
-        patterns: ["*"]
+    patterns: ["*"]
+    multi-ecosystem-group: routine-dependencies
