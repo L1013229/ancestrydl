@@ -6,7 +6,7 @@ require (
 	github.com/go-rod/rod v0.116.2
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zalando/go-keyring v0.2.8
-	golang.org/x/net v0.61.0
+	golang.org/x/net v0.62.0
 	golang.org/x/text v0.43.0
 )
 
