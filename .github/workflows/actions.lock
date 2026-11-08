@@ -6,7 +6,7 @@ workflows:
     '.github/workflows/ci.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e'
-        - 'amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50'
+        - 'amannn/action-semantic-pull-request@2252a14e810aa9b85c2d560bd7070c802206ecf6'
         - 'golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a'
 dependencies:
     'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1':
@@ -19,9 +19,9 @@ dependencies:
         commit: 'sha1-b7ad1dad31e06c5925ef5d2fc7ad053ef454303e'
         owner_id: 44036562
         repo_id: 192624594
-    'amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50':
-        ref: 'v6.1.1'
-        commit: 'sha1-48f256284bd46cdaab1048c3721360e808335d50'
+    'amannn/action-semantic-pull-request@2252a14e810aa9b85c2d560bd7070c802206ecf6':
+        ref: 'v6.1.2'
+        commit: 'sha1-2252a14e810aa9b85c2d560bd7070c802206ecf6'
         owner_id: 4038316
         repo_id: 220418983
     'golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a':
